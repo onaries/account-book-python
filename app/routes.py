@@ -200,7 +200,12 @@ async def get_assets_prev(db: Session = Depends(get_db)):
     prev = now.replace(day=now.day - 3)
     next = now.replace(day=now.day - 1)
 
-    return (
+    asset_sum = db.query(func.sum(Asset.amount)).scalar()
+    loan_sum = db.query(func.sum(Loan.amount)).scalar()
+
+    total_asset = asset_sum - loan_sum
+
+    last_asset = (
         db.query(AssetHistory)
         .filter(extract("year", AssetHistory.created_at) == now.year)
         .filter(extract("month", AssetHistory.created_at) == now.month)
@@ -209,6 +214,17 @@ async def get_assets_prev(db: Session = Depends(get_db)):
         .order_by(AssetHistory.created_at.desc())
         .first()
     )
+
+    if last_asset is not None:
+        return {
+            "total_asset": total_asset,
+            "diff_asset": total_asset - last_asset.amount,
+        }
+    else:
+        return {
+            "total_asset": total_asset,
+            "diff_asset": 0,
+        }
 
 
 @router.get("/asset/{id}")
