@@ -1,0 +1,11 @@
+fastapi
+uvicorn[standard]
+sqlalchemy
+python-dotenv
+fastapi-users[sqlalchemy]
+psycopg2
+alembic
+fastapi-pagination
+httpx
+pytest
+pytz
