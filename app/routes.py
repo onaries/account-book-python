@@ -670,7 +670,7 @@ async def get_statement_total(mode: int, date: date, db: Session = Depends(get_d
 
         data.discount = discount_sum[0] if discount_sum[0] else 0
 
-        data.total = data.income + data.expense + data.saving - data.discount
+        data.total = data.income + data.expense + data.saving + data.discount
         data.total_no_discount = data.income + data.expense + data.saving
 
         return data
