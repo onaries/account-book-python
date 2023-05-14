@@ -12,6 +12,7 @@ from database import get_db
 from datetime import datetime, date
 from sqlalchemy.orm import Session
 from sqlalchemy import select, text, func, extract
+from consts import TYPE_INCOME
 from models import (
     Category,
     MainCategory,
@@ -473,7 +474,7 @@ async def create_statement(
     change_asset = False
 
     # 지출일 때 마이너스
-    if category.main_category.category_type == 2:
+    if category.main_category.category_type != TYPE_INCOME:
         if statement_in.amount > 0:
             new_statement.amount = -statement_in.amount
 
@@ -688,6 +689,11 @@ async def update_statement(
     statement.account_card_id = statement_in.account_card_id
     statement.amount = statement_in.amount
     statement.discount = statement_in.discount
+
+    if statement.category.main_category.category_type != TYPE_INCOME:
+        if statement_in.amount > 0:
+            statement.amount *= -1
+
     statement.date = statement_in.date
     statement.saving = statement_in.saving
     statement.description = statement_in.description
