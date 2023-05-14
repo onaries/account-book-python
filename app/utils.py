@@ -1,6 +1,14 @@
+import os
+import json
+import requests
+from dotenv import load_dotenv
 from datetime import datetime
-from sqlalchemy import func
-from models import Asset, AssetHistory, Loan
+from sqlalchemy import func, extract
+from models import Asset, AssetHistory, Loan, Statement, Category, MainCategory
+from app.consts import TYPE_OUTCOME, TYPE_SAVING, TYPE_INCOME
+
+
+load_dotenv()
 
 
 def new_asset_history(db):
@@ -18,3 +26,88 @@ def new_asset_history(db):
     db.add(new_asset_history)
     db.commit()
     db.refresh(new_asset_history)
+
+
+def convert_message(db, statement):
+    now = datetime.now()
+    message = ""
+    date = statement.date.strftime("%Y/%m/%d %H:%M")
+
+    format1 = "{:,}"
+    format2 = "{:.2f}"
+
+    amount = format1.format(
+        statement.amount if statement.amount > 0 else statement.amount * -1
+    )
+    discount = format1.format(statement.discount)
+    discount_percent = format2.format(statement.discount / statement.amount * -100)
+    account_card = (
+        statement.account_card.name if statement.account_card_id is not None else "없음"
+    )
+
+    sum_query = (
+        db.query(func.sum(Statement.amount))
+        .join(Category, Statement.category_id == Category.id)
+        .join(MainCategory)
+        .filter(extract("year", Statement.date) == now.year)
+        .filter(extract("month", Statement.date) == now.month)
+        .filter(
+            MainCategory.category_type == statement.category.main_category.category_type
+        )
+        .first()
+    )
+
+    sum = 0
+    if sum_query[0] is None:
+        sum = 0
+
+    elif sum_query[0] < 0:
+        sum = sum_query[0] * -1
+
+    if statement.category.main_category.category_type == TYPE_INCOME:
+        message = (
+            f"💵수입\n[{statement.category.main_category.name}-{statement.category.name}]"
+            f"\n{statement.name}\n{amount}원"
+            f"\n{account_card}"
+            f"\n{date}"
+            f"\n월 수입 {format1.format(sum)}원"
+        )
+
+    elif statement.category.main_category.category_type == TYPE_OUTCOME:
+        message = (
+            f"💳지출\n[{statement.category.main_category.name}-{statement.category.name}]"
+            f"\n{statement.name}\n{amount}원 (할인 {discount}원 {discount_percent}%)"
+            f"\n{account_card}"
+            f"\n{date}"
+            f"\n월 지출 {format1.format(sum)}원"
+        )
+    elif statement.category.main_category.category_type == TYPE_SAVING:
+        message = (
+            f"💰저축\n[{statement.category.main_category.name}-{statement.category.name}]"
+            f"\n{statement.name}\n{amount}원"
+            f"\n{account_card}"
+            f"\n{date}"
+            f"\n월 저축 {format1.format(sum)}원"
+        )
+
+    return message
+
+
+def push_notification(message):
+    url = "https://api.telegram.org/bot{}/sendMessage".format(
+        os.getenv("TELEGRAM_TOKEN")
+    )
+
+    try:
+        headers = {"Content-Type": "application/json; charset=utf-8"}
+        r1 = requests.post(
+            url,
+            data=json.dumps(
+                {"chat_id": os.getenv("TELEGRAM_CHAT_ID"), "text": message}
+            ),
+            headers=headers,
+        )
+
+    except Exception as e:
+        print(e)
+        print("텔레그램 메시지 전송 실패")

@@ -1,6 +1,7 @@
 from datetime import timedelta
 from typing import Optional, Union
 from fastapi import Form, Query
+from fastapi.exceptions import HTTPException
 from fastapi.responses import Response
 from fastapi.types import Any
 from fastapi.routing import APIRouter
@@ -38,7 +39,7 @@ from .in_schema import (
     AccountCardIn,
     StatementIn,
 )
-from .utils import new_asset_history
+from .utils import new_asset_history, convert_message, push_notification
 
 router = APIRouter(prefix="/api", tags=["api"])
 
@@ -714,3 +715,34 @@ async def delete_statement(id: int, db: Session = Depends(get_db)):
     db.delete(statement)
     db.commit()
     return {"message": "Statement deleted successfully"}
+
+
+@router.post("/statement/{id}/message")
+async def create_statement_message(
+    id: int,
+    db: Session = Depends(get_db),
+):
+    statement = db.query(Statement).filter(Statement.id == id).first()
+
+    if statement is None:
+        raise HTTPException(status_code=404, detail="Statement not found")
+
+    message = convert_message(db, statement)
+
+    return message
+
+
+@router.post("/statement/{id}/alert")
+async def create_statement_alert(
+    id: int,
+    db: Session = Depends(get_db),
+):
+    statement = db.query(Statement).filter(Statement.id == id).first()
+
+    if statement is None:
+        raise HTTPException(status_code=404, detail="Statement not found")
+
+    message = convert_message(db, statement)
+    push_notification(message)
+
+    return ""
