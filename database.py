@@ -4,7 +4,10 @@ from sqlalchemy.orm import sessionmaker
 from dotenv import load_dotenv
 import os
 
-load_dotenv()
+if os.environ.get("ENV") == "local":
+    load_dotenv(dotenv_path=".env.local")
+else:
+    load_dotenv()
 
 # postgres
 POSTGRES_USER = os.getenv("POSTGRES_USER")
