@@ -639,7 +639,11 @@ async def get_statement_total(mode: int, date: date, db: Session = Depends(get_d
     # 카테고리별 합계
     elif mode == 3:
         category_sum = (
-            db.query(MainCategory.category_type, func.sum(Statement.amount))
+            db.query(
+                MainCategory.category_type,
+                func.sum(Statement.amount),
+                func.sum(Statement.saving),
+            )
             .join(Category, Category.id == Statement.category_id)
             .join(MainCategory)
             .filter(extract("month", Statement.date) == date.month)
@@ -660,6 +664,7 @@ async def get_statement_total(mode: int, date: date, db: Session = Depends(get_d
                 data.income = i[1]
             elif i[0] == 2:
                 data.expense = i[1]
+                data.expense_saving = i[2]
             elif i[0] == 3:
                 data.saving = i[1]
 

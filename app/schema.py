@@ -151,6 +151,7 @@ class StatementSummarySchema(BaseModel):
 class StatementCategorySumSchema(BaseModel):
     income: int = 0
     expense: int = 0
+    expense_saving: int = 0
     saving: int = 0
     discount: int = 0
     total: int = 0
