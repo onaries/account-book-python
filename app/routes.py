@@ -12,7 +12,7 @@ from database import get_db
 from datetime import datetime, date
 from sqlalchemy.orm import Session
 from sqlalchemy import select, text, func, extract
-from consts import TYPE_INCOME
+from app.consts import TYPE_INCOME
 from models import (
     Category,
     MainCategory,
