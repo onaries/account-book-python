@@ -9,3 +9,5 @@ fastapi-pagination
 httpx
 pytest
 pytz
+python-telegram-bot
+requests
