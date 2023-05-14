@@ -2,7 +2,7 @@ import os
 import json
 import requests
 from dotenv import load_dotenv
-from datetime import datetime
+from datetime import datetime, timedelta
 from sqlalchemy import func, extract
 from models import Asset, AssetHistory, Loan, Statement, Category, MainCategory
 from app.consts import TYPE_OUTCOME, TYPE_SAVING, TYPE_INCOME
@@ -74,13 +74,45 @@ def convert_message(db, statement):
         )
 
     elif statement.category.main_category.category_type == TYPE_OUTCOME:
-        message = (
-            f"💳지출\n[{statement.category.main_category.name}-{statement.category.name}]"
-            f"\n{statement.name}\n{amount}원 (할인 {discount}원 {discount_percent}%)"
-            f"\n{account_card}"
-            f"\n{date}"
-            f"\n월 지출 {format1.format(sum)}원"
-        )
+        if statement.category.main_category.weekly_limit is not None:
+            # 지출한 주의 날짜 구하기
+            sunday = statement.date - timedelta(days=statement.date.weekday())
+            saturday = sunday + timedelta(days=7)
+
+            weekly_sum_amount_query = (
+                db.query(func.sum(Statement.amount))
+                .filter(Statement.date >= sunday)
+                .filter(Statement.date < saturday)
+                .filter(Statement.category_id == statement.category_id)
+                .first()
+            )
+
+            weekly_sum_amount = 0
+            if weekly_sum_amount_query[0] is None:
+                pass
+            else:
+                weekly_sum_amount = (
+                    statement.category.main_category.weekly_limit
+                    + weekly_sum_amount_query[0]
+                )
+
+            message = (
+                f"💳지출\n[{statement.category.main_category.name}-{statement.category.name}]"
+                f"\n{statement.name}\n{amount}원 (할인 {discount}원 {discount_percent}%)"
+                f"\n{account_card}"
+                f"\n{format1.format(weekly_sum_amount)}원 남음"
+                f"\n{date}"
+                f"\n월 지출 {format1.format(sum)}원"
+            )
+        else:
+            message = (
+                f"💳지출\n[{statement.category.main_category.name}-{statement.category.name}]"
+                f"\n{statement.name}\n{amount}원 (할인 {discount}원 {discount_percent}%)"
+                f"\n{account_card}"
+                f"\n{date}"
+                f"\n월 지출 {format1.format(sum)}원"
+            )
+
     elif statement.category.main_category.category_type == TYPE_SAVING:
         message = (
             f"💰저축\n[{statement.category.main_category.name}-{statement.category.name}]"

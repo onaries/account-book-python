@@ -500,6 +500,11 @@ async def create_statement(
     db.add(new_statement)
     db.commit()
     db.refresh(new_statement)
+
+    if statement_in.is_alert:
+        message = convert_message(db, new_statement)
+        push_notification(message)
+
     return new_statement
 
 

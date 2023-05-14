@@ -49,3 +49,4 @@ class StatementIn(BaseModel):
     account_card_id: int = None
     asset_id: int = None
     loan_id: int = None
+    is_alert: bool = False
