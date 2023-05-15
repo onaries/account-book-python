@@ -1,3 +1,5 @@
+from datetime import timezone, timedelta
+
 TYPE_INCOME = 1
 TYPE_OUTCOME = 2
 TYPE_SAVING = 3
@@ -16,6 +18,8 @@ ASSET_CAR = 5
 ASSET_ANNUITY = 6
 ASSET_ETC = 7
 
+CURRENT_TIMEZONE = timezone(timedelta(hours=9))
+
 
 __all__ = [
     "TYPE_INCOME",
@@ -31,4 +35,5 @@ __all__ = [
     "ASSET_CAR",
     "ASSET_ANNUITY",
     "ASSET_ETC",
+    "CURRENT_TIMEZONE",
 ]

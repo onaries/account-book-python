@@ -5,7 +5,7 @@ from dotenv import load_dotenv
 from datetime import datetime, timedelta
 from sqlalchemy import func, extract
 from models import Asset, AssetHistory, Loan, Statement, Category, MainCategory
-from app.consts import TYPE_OUTCOME, TYPE_SAVING, TYPE_INCOME
+from app.consts import TYPE_OUTCOME, TYPE_SAVING, TYPE_INCOME, CURRENT_TIMEZONE
 
 
 load_dotenv()
@@ -29,7 +29,7 @@ def new_asset_history(db):
 
 
 def convert_message(db, statement):
-    now = func.now()
+    now = datetime.now(CURRENT_TIMEZONE)
     message = ""
     date = statement.date.strftime("%Y/%m/%d %H:%M")
 

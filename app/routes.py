@@ -12,7 +12,7 @@ from database import get_db
 from datetime import datetime, date
 from sqlalchemy.orm import Session
 from sqlalchemy import select, text, func, extract
-from app.consts import TYPE_INCOME
+from app.consts import TYPE_INCOME, CURRENT_TIMEZONE
 from models import (
     Category,
     MainCategory,
@@ -198,7 +198,8 @@ async def get_assets_history(db: Session = Depends(get_db)):
 
 @router.get("/asset/prev")
 async def get_assets_prev(db: Session = Depends(get_db)):
-    now = func.now()
+    now = datetime.now(CURRENT_TIMEZONE)
+
     prev = now.replace(day=now.day - 3)
     next = now.replace(day=now.day - 1)
 
