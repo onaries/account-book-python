@@ -198,7 +198,7 @@ async def get_assets_history(db: Session = Depends(get_db)):
 
 @router.get("/asset/prev")
 async def get_assets_prev(db: Session = Depends(get_db)):
-    now = datetime.now()
+    now = func.now()
     prev = now.replace(day=now.day - 3)
     next = now.replace(day=now.day - 1)
 

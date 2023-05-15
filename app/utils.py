@@ -21,7 +21,7 @@ def new_asset_history(db):
     # asset history 생성
     new_asset_history = AssetHistory(
         amount=asset_sum - loan_sum,
-        timestamp=datetime.now(),
+        timestamp=func.now(),
     )
     db.add(new_asset_history)
     db.commit()
@@ -29,7 +29,7 @@ def new_asset_history(db):
 
 
 def convert_message(db, statement):
-    now = datetime.now()
+    now = func.now()
     message = ""
     date = statement.date.strftime("%Y/%m/%d %H:%M")
 
