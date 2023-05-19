@@ -76,7 +76,7 @@ def convert_message(db, statement):
     elif statement.category.main_category.category_type == TYPE_OUTCOME:
         if statement.category.main_category.weekly_limit is not None:
             # 지출한 주의 날짜 구하기
-            sunday = statement.date - timedelta(days=statement.date.weekday())
+            sunday = statement.date - timedelta(days=statement.date.weekday() + 1)
             saturday = sunday + timedelta(days=7)
 
             weekly_sum_amount_query = (
