@@ -1,3 +1,4 @@
+import calendar
 from datetime import timedelta
 from typing import Optional, Union
 from fastapi import Form, Query
@@ -468,6 +469,7 @@ async def create_statement(
         account_card_id=statement_in.account_card_id,
         asset_id=statement_in.asset_id,
         loan_id=statement_in.loan_id,
+        is_fixed=statement_in.is_fixed,
     )
     category = (
         db.query(Category).filter(Category.id == statement_in.category_id).first()
@@ -479,28 +481,30 @@ async def create_statement(
         if statement_in.amount > 0:
             new_statement.amount = -statement_in.amount
 
+    asset = None
     # asset가 있을 때
     if statement_in.asset_id is not None:
         asset = db.query(Asset).filter(Asset.id == statement_in.asset_id).first()
         asset.amount += statement_in.amount
-        db.commit()
-        db.refresh(asset)
         change_asset = True
 
+    loan = None
     # loan이 있을 때
     if statement_in.loan_id is not None:
         loan = db.query(Loan).filter(Loan.id == statement_in.loan_id).first()
         loan.amount -= statement_in.amount
-        db.commit()
-        db.refresh(loan)
         change_asset = True
-
-    if change_asset:
-        new_asset_history(db)
 
     db.add(new_statement)
     db.commit()
     db.refresh(new_statement)
+
+    if change_asset:
+        if asset is not None:
+            db.refresh(asset)
+        if loan is not None:
+            db.refresh(loan)
+        new_asset_history(db)
 
     if statement_in.is_alert:
         message = convert_message(db, new_statement)
@@ -575,7 +579,11 @@ async def get_statement_summary(
 
 @router.get("/statement/category", summary="카테고리별 합계", response_model=list)
 async def statement_category(
-    mode: int, date: date, category_type: int, db: Session = Depends(get_db)
+    mode: int,
+    date: date,
+    category_type: int,
+    sub: bool = False,
+    db: Session = Depends(get_db),
 ):
     # 주간 합계
     if mode == 1:
@@ -585,11 +593,75 @@ async def statement_category(
         else:
             sunday = date - timedelta(days=date.weekday() + 1)
 
+        if sub:
+            category_list = (
+                db.query(Category)
+                .join(MainCategory)
+                .filter(MainCategory.category_type == category_type)
+                .all()
+            )
+
+            statement_list = (
+                db.query(
+                    Category.id,
+                    Category.name,
+                    func.sum(Statement.amount).label("amount"),
+                )
+                .join(Category, Statement.category_id == Category.id)
+                .join(MainCategory)
+                .filter(Statement.date >= sunday)
+                .filter(Statement.date < sunday + timedelta(days=7))
+                .filter(MainCategory.category_type == category_type)
+                .group_by(Category.id)
+            )
+
+        else:
+            category_list = (
+                db.query(MainCategory)
+                .filter(MainCategory.category_type == category_type)
+                .all()
+            )
+
+            statement_list = (
+                db.query(
+                    MainCategory.id,
+                    MainCategory.name,
+                    func.sum(Statement.amount).label("amount"),
+                )
+                .join(Category, Statement.category_id == Category.id)
+                .join(MainCategory)
+                .filter(Statement.date >= sunday)
+                .filter(Statement.date < sunday + timedelta(days=7))
+                .filter(MainCategory.category_type == category_type)
+                .group_by(MainCategory.id)
+            )
+
+        data = list()
+        for category in category_list:
+            # statement_list의 [0]번째 값에 해당하는 category 업데이트
+            amount = 0
+            for statement in statement_list:
+                if category.id == statement[0]:
+                    if category_type == 2 and statement[2] < 0:
+                        amount = statement[2] * -1
+                    else:
+                        amount = statement[2]
+                    break
+
+            data.append(dict(name=category.name, amount=amount))
+        return data
+
+    elif mode == 2:
         category_list = (
             db.query(MainCategory)
             .filter(MainCategory.category_type == category_type)
             .all()
         )
+
+        month_start = date.replace(day=1)
+        month_end = date.replace(
+            day=calendar.monthrange(date.year, date.month)[1]
+        ) + timedelta(days=1)
 
         statement_list = (
             db.query(
@@ -599,8 +671,8 @@ async def statement_category(
             )
             .join(Category, Statement.category_id == Category.id)
             .join(MainCategory)
-            .filter(Statement.date >= sunday)
-            .filter(Statement.date <= sunday + timedelta(days=7))
+            .filter(Statement.date >= month_start)
+            .filter(Statement.date <= month_end)
             .filter(MainCategory.category_type == category_type)
             .group_by(MainCategory.id)
         )
@@ -621,6 +693,55 @@ async def statement_category(
         return data
 
     return
+
+
+@router.get("/statement/subcategory", summary="카테고리별 합계")
+async def statement_subcategory(
+    mode: int, date: date, main_category: int, db: Session = Depends(get_db)
+):
+    # 주간 합계
+    if mode == 1:
+        # 해당 주의 일요일 구하기
+        if date.weekday() == 6:
+            sunday = date
+        else:
+            sunday = date - timedelta(days=date.weekday() + 1)
+
+        category_list = (
+            db.query(Category)
+            .join(MainCategory)
+            .filter(MainCategory.id == main_category)
+            .all()
+        )
+
+        statement_list = (
+            db.query(
+                Category.id,
+                Category.name,
+                func.sum(Statement.amount).label("amount"),
+            )
+            .join(Category, Statement.category_id == Category.id)
+            .join(MainCategory)
+            .filter(Statement.date >= sunday)
+            .filter(Statement.date < sunday + timedelta(days=7))
+            .filter(MainCategory.id == main_category)
+            .group_by(Category.id)
+        )
+
+        data = list()
+        for category in category_list:
+            # statement_list의 [0]번째 값에 해당하는 category 업데이트
+            amount = 0
+            for statement in statement_list:
+                if category.id == statement[0]:
+                    if category.main_category.category_type == 2 and statement[2] < 0:
+                        amount = statement[2] * -1
+                    else:
+                        amount = statement[2]
+                    break
+
+            data.append(dict(name=category.name, amount=amount))
+        return data
 
 
 @router.get("/statement/total", response_model=StatementCategorySumSchema)

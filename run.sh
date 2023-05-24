@@ -1,1 +1,1 @@
-uvicorn main:app --reload --host 0.0.0.0
+ENV=local uvicorn main:app --reload --host 0.0.0.0
