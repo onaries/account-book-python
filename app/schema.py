@@ -112,6 +112,7 @@ class StatementSchema(BaseModel):
     discount: int = 0
     saving: int = 0
     date: datetime
+    is_fixed: bool = None
     description: str = None
     created_at: datetime = None
     updated_at: datetime = None

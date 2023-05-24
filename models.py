@@ -1,4 +1,13 @@
-from sqlalchemy import Column, Integer, String, DateTime, ForeignKey, Text, Float, event
+from sqlalchemy import (
+    Column,
+    Integer,
+    String,
+    DateTime,
+    ForeignKey,
+    Text,
+    Float,
+    Boolean,
+)
 from sqlalchemy.sql import func
 from sqlalchemy.orm import relationship
 from database import Base
@@ -105,6 +114,7 @@ class Statement(Base):
     discount = Column(Integer, default=0)
     saving = Column(Integer, default=0)
     date = Column(DateTime, nullable=False)
+    is_fixed = Column(Boolean, default=False)
 
     description = Column(Text, nullable=True)
     created_at = Column(DateTime, default=func.now())
@@ -114,3 +124,13 @@ class Statement(Base):
     account_card = relationship("AccountCard", backref="statements")
     asset = relationship("Asset", backref="statements")
     loan = relationship("Loan", backref="statements")
+
+
+class Memo(Base):
+    __tablename__ = "memos"
+
+    id = Column(Integer, primary_key=True, index=True)
+    title = Column(String(255), nullable=False)
+    content = Column(Text, nullable=False)
+    created_at = Column(DateTime, default=func.now())
+    updated_at = Column(DateTime, onupdate=func.now())

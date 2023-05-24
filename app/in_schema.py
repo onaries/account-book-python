@@ -50,3 +50,4 @@ class StatementIn(BaseModel):
     asset_id: int = None
     loan_id: int = None
     is_alert: bool = False
+    is_fixed: bool = False
