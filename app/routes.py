@@ -683,6 +683,17 @@ async def get_statement_total(mode: int, date: date, db: Session = Depends(get_d
     return
 
 
+@router.get("/statement/name_list")
+async def get_statement_name_list(q: str = Query(...), db: Session = Depends(get_db)):
+    query = db.query(Statement).filter(Statement.name.ilike(f"%{q}%"))
+
+    query = query.with_entities(Statement.name).distinct()
+    name_dict = list()
+    [name_dict.append(dict(name=i[0])) for i in query.all()]
+
+    return name_dict
+
+
 @router.get("/statement/{id}")
 async def get_statement(id: int, db: Session = Depends(get_db)):
     return db.query(Statement).filter(Statement.id == id).first()
