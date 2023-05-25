@@ -496,7 +496,7 @@ async def create_statement(
     # loan이 있을 때
     if statement_in.loan_id is not None:
         loan = db.query(Loan).filter(Loan.id == statement_in.loan_id).first()
-        loan.amount -= statement_in.amount
+        loan.amount -= statement_in.saving
         change_asset = True
 
     db.add(new_statement)
