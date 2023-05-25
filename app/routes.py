@@ -433,7 +433,8 @@ async def get_statements(
     )
 
     if date_lte is not None:
-        statement_list = statement_list.filter(Statement.date <= date_lte)
+        date_lte = date_lte + timedelta(days=1)
+        statement_list = statement_list.filter(Statement.date < date_lte)
     if date_gte is not None:
         statement_list = statement_list.filter(Statement.date >= date_gte)
     if type is not None:

@@ -86,7 +86,7 @@ def convert_message(db: Session, statement):
             saturday = saturday.replace(hour=23, minute=59, second=59, microsecond=0)
 
             weekly_sum_amount_query = (
-                select(func.sum(Statement.amount))
+                select(func.sum(Statement.amount), func.sum(Statement.discount))
                 .select_from(Statement)
                 .join(Category, Statement.category_id == Category.id)
                 .filter(Statement.date >= sunday)
@@ -104,6 +104,7 @@ def convert_message(db: Session, statement):
                 weekly_sum_amount = (
                     statement.category.main_category.weekly_limit
                     + weekly_sum_amount_query[0]
+                    + weekly_sum_amount_query[1]
                 )
 
             message = (
