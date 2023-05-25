@@ -427,6 +427,7 @@ async def get_statements(
     date_gte: Optional[date] = None,
     category_id: Optional[int] = None,
     main_category_id: Optional[int] = None,
+    is_fixed: bool = Query(None),
     db: Session = Depends(get_db),
 ):
     statement_list = (
@@ -448,6 +449,8 @@ async def get_statements(
         statement_list = statement_list.filter(
             Category.main_category_id == main_category_id
         )
+    if is_fixed is not None:
+        statement_list = statement_list.filter(Statement.is_fixed == is_fixed)
 
     if sort == "id":
         sort = "statements_id"
@@ -526,6 +529,7 @@ async def get_statement_summary(
     date_gte: date = None,
     category_id: int = None,
     main_category_id: int = None,
+    is_fixed: bool = Query(None),
     size: int = Query(50, gt=0, le=100),
     page: int = Query(1, gt=0),
     db: Session = Depends(get_db),
@@ -548,6 +552,8 @@ async def get_statement_summary(
         statement_list = statement_list.filter(
             Category.main_category_id == main_category_id
         )
+    if is_fixed is not None:
+        statement_list = statement_list.filter(Statement.is_fixed == is_fixed)
 
     statement_list = statement_list.order_by(text(f"{sort} {order}"))
 
@@ -844,6 +850,7 @@ async def update_statement(
     statement.date = statement_in.date
     statement.saving = statement_in.saving
     statement.description = statement_in.description
+    statement.is_fixed = statement_in.is_fixed
     db.commit()
     db.refresh(statement)
     return statement
