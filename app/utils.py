@@ -28,7 +28,7 @@ def new_asset_history(db):
     db.refresh(new_asset_history)
 
 
-def convert_message(db, statement):
+def convert_message(db: Session, statement):
     now = datetime.now(CURRENT_TIMEZONE)
     message = ""
     date = statement.date.strftime("%Y/%m/%d %H:%M")

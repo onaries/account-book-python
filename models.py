@@ -9,8 +9,11 @@ from sqlalchemy import (
     Boolean,
 )
 from sqlalchemy.sql import func
-from sqlalchemy.orm import relationship
+from sqlalchemy.orm import relationship, configure_mappers
+from sqlalchemy_history import make_versioned
 from database import Base
+
+make_versioned(user_cls=None)
 
 
 class User(Base):
@@ -25,6 +28,7 @@ class User(Base):
 
 
 class MainCategory(Base):
+    __versioned__ = {}
     __tablename__ = "main_categories"
 
     id = Column(Integer, primary_key=True, index=True)
@@ -36,6 +40,7 @@ class MainCategory(Base):
 
 
 class Category(Base):
+    __versioned__ = {}
     __tablename__ = "categories"
 
     id = Column(Integer, primary_key=True, index=True)
@@ -57,6 +62,7 @@ class AssetHistory(Base):
 
 
 class Asset(Base):
+    __versioned__ = {}
     __tablename__ = "assets"
 
     id = Column(Integer, primary_key=True, index=True)
@@ -69,6 +75,7 @@ class Asset(Base):
 
 
 class Loan(Base):
+    __versioned__ = {}
     __tablename__ = "loans"
 
     id = Column(Integer, primary_key=True, index=True)
@@ -86,6 +93,7 @@ class Loan(Base):
 
 # 결재 수단
 class AccountCard(Base):
+    __versioned__ = {}
     __tablename__ = "account_cards"
 
     id = Column(Integer, primary_key=True, index=True)
@@ -98,6 +106,7 @@ class AccountCard(Base):
 
 
 class Statement(Base):
+    __versioned__ = {}
     __tablename__ = "statements"
 
     id = Column(Integer, primary_key=True, index=True)
@@ -114,7 +123,7 @@ class Statement(Base):
     discount = Column(Integer, default=0)
     saving = Column(Integer, default=0)
     date = Column(DateTime, nullable=False)
-    is_fixed = Column(Boolean, default=False)
+    is_fixed = Column(Boolean, default=False)  # 고정지출 여부
 
     description = Column(Text, nullable=True)
     created_at = Column(DateTime, default=func.now())
@@ -134,3 +143,6 @@ class Memo(Base):
     content = Column(Text, nullable=False)
     created_at = Column(DateTime, default=func.now())
     updated_at = Column(DateTime, onupdate=func.now())
+
+
+configure_mappers()
