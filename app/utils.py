@@ -3,7 +3,8 @@ import json
 import requests
 from dotenv import load_dotenv
 from datetime import datetime, timedelta
-from sqlalchemy import func, extract
+from sqlalchemy import func, extract, select
+from sqlalchemy.orm import Session
 from models import Asset, AssetHistory, Loan, Statement, Category, MainCategory
 from app.consts import TYPE_OUTCOME, TYPE_SAVING, TYPE_INCOME, CURRENT_TIMEZONE
 
@@ -46,7 +47,8 @@ def convert_message(db: Session, statement):
     )
 
     sum_query = (
-        db.query(func.sum(Statement.amount))
+        select(func.sum(Statement.amount))
+        .select_from(Statement)
         .join(Category, Statement.category_id == Category.id)
         .join(MainCategory)
         .filter(extract("year", Statement.date) == now.year)
@@ -54,15 +56,17 @@ def convert_message(db: Session, statement):
         .filter(
             MainCategory.category_type == statement.category.main_category.category_type
         )
-        .first()
     )
+    sum_query = db.execute(sum_query).first()
 
-    sum = 0
     if sum_query[0] is None:
-        sum = 0
+        type_sum = 0
 
     elif sum_query[0] < 0:
-        sum = sum_query[0] * -1
+        type_sum = sum_query[0] * -1
+
+    else:
+        type_sum = sum_query[0]
 
     if statement.category.main_category.category_type == TYPE_INCOME:
         message = (
@@ -70,22 +74,28 @@ def convert_message(db: Session, statement):
             f"\n{statement.name}\n{amount}원"
             f"\n{account_card}"
             f"\n{date}"
-            f"\n월 수입 {format1.format(sum)}원"
+            f"\n월 수입 {format1.format(type_sum)}원"
         )
 
     elif statement.category.main_category.category_type == TYPE_OUTCOME:
         if statement.category.main_category.weekly_limit is not None:
             # 지출한 주의 날짜 구하기
             sunday = statement.date - timedelta(days=statement.date.weekday() + 1)
+            sunday = sunday.replace(hour=0, minute=0, second=0, microsecond=0)
             saturday = sunday + timedelta(days=7)
+            saturday = saturday.replace(hour=23, minute=59, second=59, microsecond=0)
 
             weekly_sum_amount_query = (
-                db.query(func.sum(Statement.amount))
+                select(func.sum(Statement.amount))
+                .select_from(Statement)
+                .join(Category, Statement.category_id == Category.id)
                 .filter(Statement.date >= sunday)
-                .filter(Statement.date < saturday)
-                .filter(Statement.category_id == statement.category_id)
-                .first()
+                .filter(Statement.date <= saturday)
+                .filter(
+                    Category.main_category_id == statement.category.main_category_id
+                )
             )
+            weekly_sum_amount_query = db.execute(weekly_sum_amount_query).first()
 
             weekly_sum_amount = 0
             if weekly_sum_amount_query[0] is None:
@@ -102,7 +112,7 @@ def convert_message(db: Session, statement):
                 f"\n{account_card}"
                 f"\n{format1.format(weekly_sum_amount)}원 남음"
                 f"\n{date}"
-                f"\n월 지출 {format1.format(sum)}원"
+                f"\n월 지출 {format1.format(type_sum)}원"
             )
         else:
             message = (
@@ -110,7 +120,7 @@ def convert_message(db: Session, statement):
                 f"\n{statement.name}\n{amount}원 (할인 {discount}원 {discount_percent}%)"
                 f"\n{account_card}"
                 f"\n{date}"
-                f"\n월 지출 {format1.format(sum)}원"
+                f"\n월 지출 {format1.format(type_sum)}원"
             )
 
     elif statement.category.main_category.category_type == TYPE_SAVING:
@@ -119,7 +129,7 @@ def convert_message(db: Session, statement):
             f"\n{statement.name}\n{amount}원"
             f"\n{account_card}"
             f"\n{date}"
-            f"\n월 저축 {format1.format(sum)}원"
+            f"\n월 저축 {format1.format(type_sum)}원"
         )
 
     return message
