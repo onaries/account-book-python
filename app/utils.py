@@ -80,7 +80,10 @@ def convert_message(db: Session, statement):
     elif statement.category.main_category.category_type == TYPE_OUTCOME:
         if statement.category.main_category.weekly_limit is not None:
             # 지출한 주의 날짜 구하기
-            sunday = statement.date - timedelta(days=statement.date.weekday() + 1)
+            if statement.date.weekday() == 6:  # 일요일이면
+                sunday = statement.date
+            else:  # 일요일 전 (~토요일까지)인 경우 해당 주의 일요일 구하기
+                sunday = statement.date - timedelta(days=statement.date.weekday() + 1)
             sunday = sunday.replace(hour=0, minute=0, second=0, microsecond=0)
             saturday = sunday + timedelta(days=7)
             saturday = saturday.replace(hour=23, minute=59, second=59, microsecond=0)
