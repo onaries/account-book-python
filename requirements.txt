@@ -3,7 +3,7 @@ uvicorn[standard]
 sqlalchemy
 python-dotenv
 fastapi-users[sqlalchemy]
-psycopg2
+psycopg2-binary
 alembic
 fastapi-pagination
 httpx
