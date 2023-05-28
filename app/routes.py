@@ -72,7 +72,7 @@ async def create_main_category(
 
 @router.get("/main-category/all", response_model=list[MainCategorySchema])
 async def get_main_categories_all(db: Session = Depends(get_db)):
-    return db.query(MainCategory).all()
+    return db.query(MainCategory).order_by("category_type").all()
 
 
 @router.get("/main-category/{id}", response_model=MainCategorySchema)
@@ -128,7 +128,7 @@ async def create_category(
 
 @router.get("/category/all", response_model=list[CategorySchema])
 async def get_categories_all(db: Session = Depends(get_db)):
-    return db.query(Category).all()
+    return db.query(Category).order_by("main_category_id").all()
 
 
 @router.get("/category/{id}")
