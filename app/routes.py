@@ -616,6 +616,7 @@ async def statement_category(
                     Category.id,
                     Category.name,
                     func.sum(Statement.amount).label("amount"),
+                    func.sum(Statement.discount).label("discount"),
                 )
                 .join(Category, Statement.category_id == Category.id)
                 .join(MainCategory)
@@ -637,6 +638,7 @@ async def statement_category(
                     MainCategory.id,
                     MainCategory.name,
                     func.sum(Statement.amount).label("amount"),
+                    func.sum(Statement.discount).label("discount"),
                 )
                 .join(Category, Statement.category_id == Category.id)
                 .join(MainCategory)
@@ -650,15 +652,17 @@ async def statement_category(
         for category in category_list:
             # statement_list의 [0]번째 값에 해당하는 category 업데이트
             amount = 0
+            discount = 0
             for statement in statement_list:
                 if category.id == statement[0]:
                     if category_type == 2 and statement[2] < 0:
                         amount = statement[2] * -1
                     else:
                         amount = statement[2]
+                    discount = statement[3]
                     break
 
-            data.append(dict(name=category.name, amount=amount))
+            data.append(dict(name=category.name, amount=amount, discount=discount))
         return data
 
     elif mode == 2:
@@ -678,6 +682,7 @@ async def statement_category(
                 MainCategory.id,
                 MainCategory.name,
                 func.sum(Statement.amount).label("amount"),
+                func.sum(Statement.discount).label("discount"),
             )
             .join(Category, Statement.category_id == Category.id)
             .join(MainCategory)
@@ -691,15 +696,17 @@ async def statement_category(
         for category in category_list:
             # statement_list의 [0]번째 값에 해당하는 category 업데이트
             amount = 0
+            discount = 0
             for statement in statement_list:
                 if category.id == statement[0]:
                     if category_type == 2 and statement[2] < 0:
                         amount = statement[2] * -1
                     else:
                         amount = statement[2]
+                    discount = statement[3]
                     break
 
-            data.append(dict(name=category.name, amount=amount))
+            data.append(dict(name=category.name, amount=amount, discount=discount))
         return data
 
     return
