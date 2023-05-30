@@ -713,6 +713,8 @@ async def statement_category(
             )
 
         data = list()
+        total_amount = 0
+        total_discount = 0
         for category in category_list:
             # statement_list의 [0]번째 값에 해당하는 category 업데이트
             amount = 0
@@ -726,7 +728,11 @@ async def statement_category(
                     discount = statement[3]
                     break
 
+            total_amount += amount
+            total_discount += discount
+
             data.append(dict(name=category.name, amount=amount, discount=discount))
+        data.append(dict(name="합계", amount=total_amount, discount=total_discount))
         return data
 
     elif mode == 2:
@@ -757,6 +763,8 @@ async def statement_category(
         )
 
         data = list()
+        total_amount = 0
+        total_discount = 0
         for category in category_list:
             # statement_list의 [0]번째 값에 해당하는 category 업데이트
             amount = 0
@@ -770,7 +778,11 @@ async def statement_category(
                     discount = statement[3]
                     break
 
+            total_amount += amount
+            total_discount += discount
+
             data.append(dict(name=category.name, amount=amount, discount=discount))
+        data.append(dict(name="합계", amount=total_amount, discount=total_discount))
         return data
 
     return

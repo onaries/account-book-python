@@ -119,6 +119,7 @@ class StatementSchema(BaseModel):
     category: CategorySchema = None
     category_type: int = None
     account_card: AccountCardSchema = None
+    asset: AssetSchema = None
 
     class Config:
         orm_mode = True
