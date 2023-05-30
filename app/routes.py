@@ -196,7 +196,65 @@ async def get_assets_total(db: Session = Depends(get_db)):
 
 
 @router.get("/asset/history")
-async def get_assets_history(db: Session = Depends(get_db)):
+async def get_assets_history(
+    date: date, mode: int = Query(1), db: Session = Depends(get_db)
+):
+    # 주간모드
+    if mode == 1:
+        prev = date.replace(day=date.day - date.weekday() - 1)
+        next_date = date.replace(day=date.day + 1)
+
+        query = (
+            db.query(AssetHistory)
+            .filter(AssetHistory.created_at >= prev)
+            .filter(AssetHistory.created_at <= next_date)
+            .order_by(AssetHistory.created_at)
+            .all()
+        )
+
+        # created_at의 day마다 가장 마지막 값만 저장
+        result = {}
+
+        for q in query:
+            result[q.created_at.strftime("%Y-%m-%d")] = q.amount
+
+        response = []
+        for k in result.keys():
+            response.append(dict(name=k, value=result[k]))
+
+        return response
+
+    # 월간모드
+    elif mode == 2:
+        prev = date.replace(day=1)
+        next_date = date.replace(day=calendar.monthrange(date.year, date.month)[1])
+
+        query = (
+            db.query(AssetHistory)
+            .filter(AssetHistory.created_at >= prev)
+            .filter(AssetHistory.created_at <= next_date)
+            .order_by(AssetHistory.created_at)
+            .all()
+        )
+
+        # created_at의 day마다 가장 마지막 값만 저장
+        result = {}
+
+        for q in query:
+            result[q.created_at.strftime("%Y-%m-%d")] = q.amount
+
+        response = []
+        for k in result.keys():
+            response.append(dict(name=k, value=result[k]))
+
+        return response
+
+    else:
+        return None
+
+
+@router.get("/asset/history/all")
+async def get_assets_history_all(db: Session = Depends(get_db)):
     return db.query(AssetHistory).all()
 
 
@@ -204,8 +262,9 @@ async def get_assets_history(db: Session = Depends(get_db)):
 async def get_assets_prev(db: Session = Depends(get_db)):
     now = datetime.now(CURRENT_TIMEZONE)
 
-    prev = now.replace(day=now.day - 3)
-    next = now.replace(day=now.day - 1)
+    # 최근 일주일(일~토)
+    prev = now.replace(day=now.day - now.weekday() - 1).date()
+    next_date = now.replace(day=now.day + 1).date()
 
     asset_sum = db.query(func.sum(Asset.amount)).scalar()
     loan_sum = db.query(func.sum(Loan.amount)).scalar()
@@ -214,18 +273,23 @@ async def get_assets_prev(db: Session = Depends(get_db)):
 
     last_asset = (
         db.query(AssetHistory)
-        .filter(extract("year", AssetHistory.created_at) == now.year)
-        .filter(extract("month", AssetHistory.created_at) == now.month)
-        .filter(extract("day", AssetHistory.created_at) >= prev.day)
-        .filter(extract("day", AssetHistory.created_at) <= next.day)
-        .order_by(AssetHistory.created_at.desc())
-        .first()
+        .filter(AssetHistory.created_at >= prev)
+        .filter(AssetHistory.created_at <= next_date)
+        .order_by(AssetHistory.created_at)
+        .all()
     )
 
-    if last_asset is not None:
+    if last_asset is not None and len(last_asset) > 0:
+        first_value = last_asset[0].amount
+        diff_sum = 0
+        for i in range(1, len(last_asset)):
+            diff = last_asset[i].amount - first_value
+            diff_sum += diff
+            first_value = last_asset[i].amount
+
         return {
             "total_asset": total_asset,
-            "diff_asset": total_asset - last_asset.amount,
+            "diff_asset": diff_sum,
         }
     else:
         return {
@@ -869,7 +933,10 @@ async def delete_statement(id: int, db: Session = Depends(get_db)):
 
     if statement.asset_id is not None:
         asset = db.query(Asset).filter(Asset.id == statement.asset_id).first()
-        asset.amount -= statement.amount
+        if statement.amount < 0:
+            asset.amount += statement.amount
+        else:
+            asset.amount -= statement.amount
         db.commit()
         db.refresh(asset)
 
