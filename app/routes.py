@@ -908,6 +908,31 @@ async def get_statement_name_list(q: str = Query(...), db: Session = Depends(get
     return name_dict
 
 
+@router.get("/statement/calendar")
+async def get_statement_calendar(date: date, db: Session = Depends(get_db)):
+    sub_query = (
+        select(Statement, MainCategory.category_type)
+        .select_from(Statement)
+        .join(Category, Statement.category_id == Category.id)
+        .join(MainCategory)
+        .filter(extract("year", Statement.date) == date.year)
+        .filter(extract("month", Statement.date) == date.month)
+        .subquery()
+    )
+
+    query = (
+        select(
+            extract("day", sub_query.c.created_at).label("day"),
+            sub_query.c.category_type,
+            func.sum(sub_query.c.amount),
+        )
+        .select_from(sub_query)
+        .group_by("day", sub_query.c.category_type)
+    )
+
+    return db.execute(query).all()
+
+
 @router.get("/statement/{id}")
 async def get_statement(id: int, db: Session = Depends(get_db)):
     return db.query(Statement).filter(Statement.id == id).first()
