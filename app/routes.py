@@ -201,8 +201,8 @@ async def get_assets_history(
 ):
     # 주간모드
     if mode == 1:
-        prev = date.replace(day=date.day - date.weekday() - 1)
-        next_date = date.replace(day=date.day + 1)
+        prev = date - timedelta(days=date.weekday() + 1)
+        next_date = date + timedelta(days=1)
 
         query = (
             db.query(AssetHistory)
@@ -260,11 +260,11 @@ async def get_assets_history_all(db: Session = Depends(get_db)):
 
 @router.get("/asset/prev")
 async def get_assets_prev(db: Session = Depends(get_db)):
-    now = datetime.now(CURRENT_TIMEZONE)
+    now = datetime.now(CURRENT_TIMEZONE).date()
 
     # 최근 일주일(일~토)
-    prev = now.replace(day=now.day - now.weekday() - 1).date()
-    next_date = now.replace(day=now.day + 1).date()
+    prev = now - timedelta(days=1 + now.weekday())
+    next_date = now + timedelta(days=1)
 
     asset_sum = db.query(func.sum(Asset.amount)).scalar()
     loan_sum = db.query(func.sum(Loan.amount)).scalar()
