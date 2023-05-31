@@ -922,7 +922,7 @@ async def get_statement_calendar(date: date, db: Session = Depends(get_db)):
 
     query = (
         select(
-            extract("day", sub_query.c.created_at).label("day"),
+            extract("day", sub_query.c.date).label("day"),
             sub_query.c.category_type,
             func.sum(sub_query.c.amount),
         )
