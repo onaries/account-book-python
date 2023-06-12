@@ -13,7 +13,7 @@ from database import get_db
 from datetime import datetime, date
 from sqlalchemy.orm import Session
 from sqlalchemy import select, text, func, extract
-from app.consts import TYPE_INCOME, CURRENT_TIMEZONE
+from app.consts import TYPE_INCOME, CURRENT_TIMEZONE, TYPE_SAVING, TYPE_OUTCOME
 from models import (
     Category,
     MainCategory,
@@ -303,7 +303,7 @@ async def get_asset(id: int, db: Session = Depends(get_db)):
     return db.query(Asset).filter(Asset.id == id).first()
 
 
-@router.put("/asset/{id}")
+@router.put("/asset/{id}", response_model=AssetSchema)
 async def update_asset(
     id: int,
     asset_in: AssetIn,
@@ -556,8 +556,12 @@ async def create_statement(
     # asset가 있을 때
     if statement_in.asset_id is not None:
         asset = db.query(Asset).filter(Asset.id == statement_in.asset_id).first()
-        asset.amount += statement_in.amount
-        change_asset = True
+        if category.main_category.category_type == TYPE_SAVING:
+            asset.amount += statement_in.amount
+            change_asset = True
+        elif category.main_category.category_type == TYPE_OUTCOME:
+            asset.amount -= statement_in.amount - statement_in.discount
+            change_asset = True
 
     loan = None
     # loan이 있을 때

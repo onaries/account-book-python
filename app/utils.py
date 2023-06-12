@@ -16,8 +16,14 @@ def new_asset_history(db):
     # asset의 sum 구하기
     asset_sum = db.query(func.sum(Asset.amount)).scalar()
 
+    if asset_sum is None:
+        asset_sum = 0
+
     # loan의 sum 구하기
     loan_sum = db.query(func.sum(Loan.amount)).scalar()
+
+    if loan_sum is None:
+        loan_sum = 0
 
     # asset history 생성
     new_asset_history = AssetHistory(
