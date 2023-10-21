@@ -11,4 +11,4 @@ pytest
 pytz
 python-telegram-bot
 requests
-sqlalchemy-history
+sqlalchemy_continuum

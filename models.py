@@ -10,7 +10,7 @@ from sqlalchemy import (
 )
 from sqlalchemy.sql import func
 from sqlalchemy.orm import relationship, configure_mappers
-from sqlalchemy_history import make_versioned
+from sqlalchemy_continuum import make_versioned
 from database import Base
 
 make_versioned(user_cls=None)
