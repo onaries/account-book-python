@@ -1,5 +1,7 @@
 import os
-from fastapi import FastAPI, Form
+from fastapi import FastAPI, Form, Request
+from fastapi.staticfiles import StaticFiles
+from fastapi.templating import Jinja2Templates
 from fastapi_pagination import add_pagination
 from sqlalchemy import event
 from app.routes import router as api_router
@@ -19,6 +21,19 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+app.mount("", StaticFiles(directory="static", html=True), name="static")
+templates = Jinja2Templates(directory="static")
+
+
+@app.get("/")
+async def serve_spa(request: Request):
+    return templates.TemplateResponse("index.html", {"request": request})
+
+
+@app.get("/{full_path:path}")
+async def catch_all(request: Request, full_path: str):
+    return templates.TemplateResponse("index.html", {"request": request})
 
 
 @app.on_event("startup")
