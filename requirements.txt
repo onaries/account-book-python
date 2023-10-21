@@ -11,4 +11,5 @@ pytest
 pytz
 python-telegram-bot
 requests
+sqlalchemy-utils
 sqlalchemy_continuum
