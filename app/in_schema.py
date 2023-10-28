@@ -47,7 +47,7 @@ class StatementIn(BaseModel):
     saving: int = 0
     description: str | None = Field(default=None)
     account_card_id: int | None
-    asset_id: int | None
-    loan_id: int | None
+    asset_id: int | None = Field(default=None)
+    loan_id: int | None = Field(default=None)
     is_alert: bool = Field(default=False)
     is_fixed: bool = Field(default=False)
