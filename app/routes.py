@@ -958,7 +958,7 @@ async def get_statement_name_list(q: str = Query(...), db: Session = Depends(get
     return name_dict
 
 
-@router.get("/statement/calendar")
+@router.get("/statement/calendar", response_model=list[tuple[int, int, int]])
 async def get_statement_calendar(date: date, db: Session = Depends(get_db)):
     sub_query = (
         select(Statement, MainCategory.category_type)
