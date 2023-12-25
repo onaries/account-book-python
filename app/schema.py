@@ -141,3 +141,8 @@ class StatementCategorySumSchema(BaseModel):
     discount: int = 0
     total: int = 0
     total_no_discount: int = 0
+
+
+class AssetSchema2(BaseModel):
+    date: str
+    amount: int

@@ -1,4 +1,5 @@
 import calendar
+from collections import defaultdict
 from datetime import timedelta
 from typing import Optional, Union
 from fastapi import Form, Query
@@ -32,6 +33,7 @@ from .schema import (
     StatementSchema,
     StatementSummarySchema,
     StatementCategorySumSchema,
+    AssetSchema2,
 )
 from .in_schema import (
     MainCategoryIn,
@@ -333,11 +335,55 @@ async def delete_asset(id: int, db: Session = Depends(get_db)):
     return {"message": "Asset deleted successfully"}
 
 
+@router.get("/asset/{id}/history", response_model=list[AssetSchema2])
+async def get_asset_detail_history(id: int, db: Session = Depends(get_db)):
+    asset = db.query(Asset).filter(Asset.id == id).first()
+
+    if asset is None:
+        raise HTTPException(status_code=404, detail="Asset not found")
+
+    data = defaultdict(int)
+    for history in asset.versions:
+        if history.updated_at is None:
+            data[history.created_at.strftime("%Y-%m-%d")] = history.amount
+
+        else:
+            data[history.updated_at.strftime("%Y-%m-%d")] = history.amount
+
+    result = []
+    for k, v in data.items():
+        result.append(dict(date=k, amount=v))
+
+    return result[-20:]
+
+
 @router.get("/loan", response_model=Page[LoanSchema])
 async def get_loans(
     sort: str = "id", order: str = "ASC", db: Session = Depends(get_db)
 ):
     return paginate(db, select(Loan).order_by(text(f"{sort} {order}")))
+
+
+@router.get("/loan/{id}/history", response_model=list[AssetSchema2])
+async def get_loan_detail_history(id: int, db: Session = Depends(get_db)):
+    loan = db.query(Loan).filter(Loan.id == id).first()
+
+    if loan is None:
+        raise HTTPException(status_code=404, detail="Loan not found")
+
+    data = defaultdict(int)
+    for history in loan.versions:
+        if history.updated_at is None:
+            data[history.created_at.strftime("%Y-%m-%d")] = history.amount
+
+        else:
+            data[history.updated_at.strftime("%Y-%m-%d")] = history.amount
+
+    result = []
+    for k, v in data.items():
+        result.append(dict(date=k, amount=v))
+
+    return result[-20:]
 
 
 @router.post("/loan")
