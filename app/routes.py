@@ -958,7 +958,7 @@ async def get_statement_name_list(q: str = Query(...), db: Session = Depends(get
     return name_dict
 
 
-@router.get("/statement/calendar", response_model=list[tuple[int, int, int]])
+@router.get("/statement/calendar", response_model=list[tuple[int, int, int, str]])
 async def get_statement_calendar(date: date, db: Session = Depends(get_db)):
     sub_query = (
         select(Statement, MainCategory.category_type)
@@ -980,7 +980,35 @@ async def get_statement_calendar(date: date, db: Session = Depends(get_db)):
         .group_by("day", sub_query.c.category_type)
     )
 
-    return db.execute(query).all()
+    result = db.execute(query).all()
+
+    for i, r in enumerate(result):
+        full_date = datetime(date.year, date.month, int(r[0])).date()
+
+        result[i] = list(r)
+
+        statement_query = (
+            select(
+                Statement.name,
+                Statement.amount,
+            )
+            .select_from(Statement)
+            .join(Category, Statement.category_id == Category.id)
+            .join(MainCategory)
+            .where(extract("year", Statement.date) == full_date.year)
+            .where(extract("month", Statement.date) == full_date.month)
+            .where(extract("day", Statement.date) == full_date.day)
+            .where(MainCategory.category_type == r[1])
+        )
+
+        statements = db.execute(statement_query).all()
+        statement_txt = ""
+        for statement in statements:
+            statement_txt += f"{statement[0]} {format(statement[1], ',d')}\n"
+
+        result[i].append(statement_txt)
+
+    return result
 
 
 @router.get("/statement/{id}")
