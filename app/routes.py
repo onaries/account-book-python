@@ -916,6 +916,7 @@ async def get_statement_total(mode: int, date: date, db: Session = Depends(get_d
             )
             .join(Category, Category.id == Statement.category_id)
             .join(MainCategory)
+            .filter(extract("year", Statement.date) == date.year)
             .filter(extract("month", Statement.date) == date.month)
             .group_by(MainCategory.category_type)
             .all()
@@ -923,6 +924,7 @@ async def get_statement_total(mode: int, date: date, db: Session = Depends(get_d
 
         discount_sum = (
             db.query(func.sum(Statement.discount))
+            .filter(extract("year", Statement.date) == date.year)
             .filter(extract("month", Statement.date) == date.month)
             .first()
         )
