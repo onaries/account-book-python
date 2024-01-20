@@ -533,6 +533,7 @@ async def get_statements(
     sort: str = "id",
     order: str = "ASC",
     type: int = None,
+    q: Optional[str] = None,
     date_lte: Optional[date] = None,
     date_gte: Optional[date] = None,
     category_id: Optional[int] = None,
@@ -546,6 +547,8 @@ async def get_statements(
         .join(MainCategory)
     )
 
+    if q is not None:
+        statement_list = statement_list.filter(Statement.name.like(f"%{q}%"))
     if date_lte is not None:
         date_lte = date_lte + timedelta(days=1)
         statement_list = statement_list.filter(Statement.date < date_lte)
@@ -639,6 +642,7 @@ async def get_statement_summary(
     sort: str = "id",
     order: str = "ASC",
     type: int = None,
+    q: Optional[str] = None,
     date_lte: date = None,
     date_gte: date = None,
     category_id: int = None,
@@ -654,6 +658,8 @@ async def get_statement_summary(
         .join(MainCategory)
     )
 
+    if q is not None:
+        statement_list = statement_list.filter(Statement.name.like(f"%{q}%"))
     if date_lte is not None:
         statement_list = statement_list.filter(Statement.date <= date_lte)
     if date_gte is not None:
