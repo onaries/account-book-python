@@ -134,12 +134,18 @@ def convert_message(db: Session, statement):
             )
 
     elif statement.category.main_category.category_type == TYPE_SAVING:
+        asset_obj = db.query(Asset).filter(Asset.id == statement.asset_id).first()
+        asset_amount = None
+        if asset_obj is not None:
+            asset_amount = asset_obj.amount
+
         message = (
             f"💰저축\n[{statement.category.main_category.name}-{statement.category.name}]"
             f"\n{statement.name}\n{amount}원"
             f"\n{account_card}"
             f"\n{date}"
             f"\n월 저축 {format1.format(type_sum)}원"
+            + (f"\n자산 {format1.format(asset_amount)}원" if asset_amount else "")
         )
 
     return message
