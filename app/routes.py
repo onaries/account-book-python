@@ -957,11 +957,35 @@ async def get_statement_total(mode: int, date: date, db: Session = Depends(get_d
 
 @router.get("/statement/name_list")
 async def get_statement_name_list(q: str = Query(...), db: Session = Depends(get_db)):
-    query = db.query(Statement).filter(Statement.name.ilike(f"%{q}%"))
+    query = (
+        db.query(Statement)
+        .join(Category, Statement.category_id == Category.id)
+        .join(MainCategory)
+        .join(AccountCard)
+        .filter(Statement.name.ilike(f"%{q}%"))
+        .order_by(Statement.created_at.desc())
+    )
 
-    query = query.with_entities(Statement.name).distinct()
     name_dict = list()
-    [name_dict.append(dict(name=i[0])) for i in query.all()]
+    [
+        name_dict.append(
+            dict(
+                name=i.name,
+                amount=i.amount,
+                category=i.category.id,
+                category_name=i.category.name,
+                main_category_name=i.category.main_category.name,
+                account_card=i.account_card.id,
+                account_card_name=i.account_card.name,
+                discount=i.discount,
+                saving=i.saving,
+                created_at=i.created_at,
+                description=i.description,
+                is_fixed=i.is_fixed,
+            )
+        )
+        for i in query.all()
+    ]
 
     return name_dict
 
