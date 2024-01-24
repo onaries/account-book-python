@@ -251,6 +251,30 @@ async def get_assets_history(
 
         return response
 
+    # 년간 모드
+    elif mode == 3:
+        prev = date.replace(month=1, day=1)
+        next_date = date.replace(month=12, day=31)
+
+        query = (
+            db.query(AssetHistory)
+            .filter(AssetHistory.created_at >= prev)
+            .filter(AssetHistory.created_at <= next_date)
+            .order_by(AssetHistory.created_at)
+            .all()
+        )
+
+        result = {}
+
+        for q in query:
+            result[q.created_at.strftime("%Y-%m")] = q.amount
+
+        response = []
+        for k in result.keys():
+            response.append(dict(name=k, value=result[k]))
+
+        return response
+
     else:
         return None
 
