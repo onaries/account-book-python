@@ -3,6 +3,17 @@ from pydantic.types import Any
 from datetime import datetime
 
 
+class AssetSchema(BaseModel):
+    id: int
+    name: str
+    asset_type: int
+    amount: int
+    description: str | None
+    created_at: datetime
+    updated_at: datetime | None
+    model_config = ConfigDict(from_attributes=True)
+
+
 class MainCategorySchema(BaseModel):
     id: int
     name: str
@@ -11,6 +22,7 @@ class MainCategorySchema(BaseModel):
     created_at: datetime
     updated_at: datetime | None
     model_config = ConfigDict(from_attributes=True)
+    asset_id: int | None
 
 
 class MainCategoryOut(BaseModel):
@@ -40,17 +52,6 @@ class CategoryOut(BaseModel):
     id: int
     name: str
     main_category: MainCategoryOut
-
-
-class AssetSchema(BaseModel):
-    id: int
-    name: str
-    asset_type: int
-    amount: int
-    description: str | None
-    created_at: datetime
-    updated_at: datetime | None
-    model_config = ConfigDict(from_attributes=True)
 
 
 class LoanSchema(BaseModel):

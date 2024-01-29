@@ -116,21 +116,44 @@ def convert_message(db: Session, statement):
                     + weekly_sum_amount_query[1]
                 )
 
+            asset_obj = (
+                db.query(Asset)
+                .filter(Asset.id == statement.category.main_category.asset_id)
+                .first()
+            )
+
             message = (
                 f"💳지출\n[{statement.category.main_category.name}-{statement.category.name}]"
                 f"\n{statement.name}\n{amount}원 (할인 {discount}원 {discount_percent}%)"
                 f"\n{account_card}"
                 f"\n{format1.format(weekly_sum_amount)}원 남음"
-                f"\n{date}"
+                + (
+                    f"\n{asset_obj.name} {format1.format(asset_obj.amount)}원"
+                    if asset_obj
+                    else ""
+                )
+                + f"\n{date}"
                 f"\n월 지출 {format1.format(type_sum)}원"
             )
+
         else:
+            asset_obj = (
+                db.query(Asset)
+                .filter(Asset.id == statement.category.main_category.asset_id)
+                .first()
+            )
+
             message = (
                 f"💳지출\n[{statement.category.main_category.name}-{statement.category.name}]"
                 f"\n{statement.name}\n{amount}원 (할인 {discount}원 {discount_percent}%)"
                 f"\n{account_card}"
                 f"\n{date}"
-                f"\n월 지출 {format1.format(type_sum)}원"
+                + (
+                    f"\n{asset_obj.name} {format1.format(asset_obj.amount)}원"
+                    if asset_obj
+                    else ""
+                )
+                + f"\n월 지출 {format1.format(type_sum)}원"
             )
 
     elif statement.category.main_category.category_type == TYPE_SAVING:

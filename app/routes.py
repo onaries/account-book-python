@@ -65,6 +65,7 @@ async def create_main_category(
         name=main_category_in.name,
         weekly_limit=main_category_in.weekly_limit,
         category_type=main_category_in.category_type,
+        asset_id=main_category_in.asset_id,
     )
     db.add(new_main_category)
     db.commit()
@@ -82,16 +83,17 @@ async def get_main_category(id: int, db: Session = Depends(get_db)):
     return db.query(MainCategory).filter(MainCategory.id == id).first()
 
 
-@router.put("/main-category/{id}")
+@router.put("/main-category/{id}", response_model=MainCategorySchema)
 async def update_main_category(
     id: int,
-    main_category_in: MainCategorySchema,
+    main_category_in: MainCategoryIn,
     db: Session = Depends(get_db),
 ):
     main_category = db.query(MainCategory).filter(MainCategory.id == id).first()
     main_category.name = main_category_in.name
     main_category.weekly_limit = main_category_in.weekly_limit
     main_category.category_type = main_category_in.category_type
+    main_category.asset_id = main_category_in.asset_id
     db.commit()
     db.refresh(main_category)
     return main_category

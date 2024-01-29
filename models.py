@@ -37,6 +37,7 @@ class MainCategory(Base):
     category_type = Column(Integer)
     created_at = Column(DateTime, default=func.now())
     updated_at = Column(DateTime, onupdate=func.now())
+    asset_id = Column(Integer, ForeignKey("assets.id"), nullable=True)
 
 
 class Category(Base):

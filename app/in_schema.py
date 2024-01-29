@@ -6,6 +6,7 @@ class MainCategoryIn(BaseModel):
     name: str
     weekly_limit: int | None = Field(default=None)
     category_type: int
+    asset_id: int | None = Field(default=None)
 
 
 class CategoryIn(BaseModel):
