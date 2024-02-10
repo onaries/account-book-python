@@ -614,7 +614,7 @@ async def create_statement(
         category_id=statement_in.category_id,
         amount=statement_in.amount,
         discount=statement_in.discount,
-        date=statement_in.date,
+        date=statement_in.date.replace(second=0, microsecond=0),
         saving=statement_in.saving,
         description=statement_in.description,
         account_card_id=statement_in.account_card_id,
@@ -1096,7 +1096,7 @@ async def update_statement(
         if statement_in.amount > 0:
             statement.amount *= -1
 
-    statement.date = statement_in.date
+    statement.date = statement_in.date.replace(second=0, microsecond=0)
     statement.saving = statement_in.saving
     statement.description = statement_in.description
     statement.is_fixed = statement_in.is_fixed
