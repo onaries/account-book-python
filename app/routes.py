@@ -599,7 +599,9 @@ async def get_statements(
     if sort == "id":
         sort = "statements_id"
 
-    statement_list = statement_list.order_by(text(f"{sort} {order}"))
+    statement_list = statement_list.order_by(
+        text(f"{sort} {order}"), text("statements_id desc")
+    )
 
     return paginate(db, statement_list)
 
