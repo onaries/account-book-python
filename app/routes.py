@@ -413,6 +413,8 @@ async def get_loan_detail_history(id: int, db: Session = Depends(get_db)):
             if history.amount != prev_amount:
                 data[history.updated_at.strftime("%Y-%m-%d")] = history.amount
 
+        prev_amount = history.amount
+
     result = []
     for k, v in data.items():
         result.append(dict(date=k, amount=v))
