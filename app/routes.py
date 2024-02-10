@@ -403,12 +403,15 @@ async def get_loan_detail_history(id: int, db: Session = Depends(get_db)):
         raise HTTPException(status_code=404, detail="Loan not found")
 
     data = defaultdict(int)
+    prev_amount = -1
     for history in loan.versions:
         if history.updated_at is None:
-            data[history.created_at.strftime("%Y-%m-%d")] = history.amount
+            if history.amount != prev_amount:
+                data[history.created_at.strftime("%Y-%m-%d")] = history.amount
 
         else:
-            data[history.updated_at.strftime("%Y-%m-%d")] = history.amount
+            if history.amount != prev_amount:
+                data[history.updated_at.strftime("%Y-%m-%d")] = history.amount
 
     result = []
     for k, v in data.items():
