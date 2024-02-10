@@ -58,7 +58,7 @@ class LoanSchema(BaseModel):
     id: int
     name: str
     principal: int
-    interest_rate: int
+    interest_rate: float
     total_months: int
     current_month: int
     amount: int
