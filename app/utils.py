@@ -94,27 +94,27 @@ def convert_message(db: Session, statement):
             saturday = sunday + timedelta(days=7)
             saturday = saturday.replace(hour=23, minute=59, second=59, microsecond=0)
 
-            weekly_sum_amount_query = (
-                select(func.sum(Statement.amount), func.sum(Statement.discount))
-                .select_from(Statement)
-                .join(Category, Statement.category_id == Category.id)
-                .filter(Statement.date >= sunday)
-                .filter(Statement.date <= saturday)
-                .filter(
-                    Category.main_category_id == statement.category.main_category_id
-                )
-            )
-            weekly_sum_amount_query = db.execute(weekly_sum_amount_query).first()
+            # weekly_sum_amount_query = (
+            #     select(func.sum(Statement.amount), func.sum(Statement.discount))
+            #     .select_from(Statement)
+            #     .join(Category, Statement.category_id == Category.id)
+            #     .filter(Statement.date >= sunday)
+            #     .filter(Statement.date <= saturday)
+            #     .filter(
+            #         Category.main_category_id == statement.category.main_category_id
+            #     )
+            # )
+            # weekly_sum_amount_query = db.execute(weekly_sum_amount_query).first()
 
-            weekly_sum_amount = 0
-            if weekly_sum_amount_query[0] is None:
-                pass
-            else:
-                weekly_sum_amount = (
-                    statement.category.main_category.weekly_limit
-                    + weekly_sum_amount_query[0]
-                    + weekly_sum_amount_query[1]
-                )
+            # weekly_sum_amount = 0
+            # if weekly_sum_amount_query[0] is None:
+            #     pass
+            # else:
+            #     weekly_sum_amount = (
+            #         statement.category.main_category.weekly_limit
+            #         + weekly_sum_amount_query[0]
+            #         + weekly_sum_amount_query[1]
+            #     )
 
             asset_obj = (
                 db.query(Asset)
@@ -126,7 +126,7 @@ def convert_message(db: Session, statement):
                 f"💳지출\n[{statement.category.main_category.name}-{statement.category.name}]"
                 f"\n{statement.name}\n{amount}원 (할인 {discount}원 {discount_percent}%)"
                 f"\n{account_card}"
-                f"\n{format1.format(weekly_sum_amount)}원 남음"
+                # f"\n{format1.format(weekly_sum_amount)}원 남음"
                 + (
                     f"\n{asset_obj.name} {format1.format(asset_obj.amount)}원"
                     if asset_obj
