@@ -18,3 +18,6 @@ down:
 .PHONY: ps
 ps:
 	docker-compose ps
+
+shell:
+	docker exec -it account-server /bin/bash
