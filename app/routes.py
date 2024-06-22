@@ -599,7 +599,7 @@ async def get_statements(
             statement_list = statement_list.filter(
                 and_(
                     MainCategory.category_type == 3,
-                    or_(Category.id != 57, Category.id != 58),
+                    or_(Statement.category_id != 57, Statement.category_id != 58),
                 )
             )
 
