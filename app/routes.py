@@ -599,7 +599,7 @@ async def get_statements(
             statement_list = statement_list.filter(
                 and_(
                     MainCategory.category_type == 3,
-                    or_(Statement.category_id != 57, Statement.category_id != 58),
+                    and_(Statement.category_id != 57, Statement.category_id != 58),
                 )
             )
 
@@ -726,7 +726,21 @@ async def get_statement_summary(
     if date_gte is not None:
         statement_list = statement_list.filter(Statement.date >= date_gte)
     if type is not None:
-        statement_list = statement_list.filter(MainCategory.category_type == type)
+        if type < 3:
+            statement_list = statement_list.filter(MainCategory.category_type == type)
+        elif type == 3:
+            statement_list = statement_list.filter(
+                and_(
+                    MainCategory.category_type == 3,
+                    and_(Statement.category_id != 57, Statement.category_id != 58),
+                )
+            )
+        elif type == 4:
+            statement_list = statement_list.filter(MainCategory.category_type == 3)
+        elif type == 5:
+            statement_list = statement_list.filter(
+                and_(MainCategory.category_type == 2, Statement.is_fixed == True)
+            )
     if category_id is not None:
         statement_list = statement_list.filter(Statement.category_id == category_id)
     if main_category_id is not None:
