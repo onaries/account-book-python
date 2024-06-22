@@ -13,7 +13,7 @@ from fastapi_pagination.ext.sqlalchemy import paginate
 from database import get_db
 from datetime import datetime, date
 from sqlalchemy.orm import Session
-from sqlalchemy import select, text, func, extract
+from sqlalchemy import select, text, func, extract, and_, or_
 from app.consts import TYPE_INCOME, CURRENT_TIMEZONE, TYPE_SAVING, TYPE_OUTCOME
 from models import (
     Category,
@@ -191,7 +191,7 @@ async def create_asset(
 
 @router.get("/asset/all", response_model=list[AssetSchema])
 async def get_assets_all(db: Session = Depends(get_db)):
-    return db.query(Asset).all()
+    return db.query(Asset).order_by("asset_type", "name").all()
 
 
 @router.get("/asset/total")
@@ -591,13 +591,36 @@ async def get_statements(
     if date_gte is not None:
         statement_list = statement_list.filter(Statement.date >= date_gte)
     if type is not None:
-        statement_list = statement_list.filter(MainCategory.category_type == type)
+        if type < 3:
+            statement_list = statement_list.filter(MainCategory.category_type == type)
+
+        # 지출을 제외한 순수 저축
+        elif type == 3:
+            statement_list = statement_list.filter(
+                and_(
+                    MainCategory.category_type == 3,
+                    or_(Category.id != 57, Category.id != 58),
+                )
+            )
+
+        # 모든 저축 항목
+        elif type == 4:
+            statement_list = statement_list.filter(MainCategory.category_type == 3)
+
+        # 고정 지출
+        elif type == 5:
+            statement_list = statement_list.filter(
+                and_(MainCategory.category_type == 2, Statement.is_fixed == True)
+            )
     if category_id is not None:
         statement_list = statement_list.filter(Statement.category_id == category_id)
+
     if main_category_id is not None:
+
         statement_list = statement_list.filter(
             Category.main_category_id == main_category_id
         )
+
     if is_fixed is not None:
         statement_list = statement_list.filter(Statement.is_fixed == is_fixed)
 
