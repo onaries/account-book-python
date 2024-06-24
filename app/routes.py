@@ -1003,14 +1003,17 @@ async def get_statement_total(mode: int, date: date, db: Session = Depends(get_d
             .all()
         )
 
-        # 지출로 기록된 저축 항목 합계
-        expense_saving_sum = (
+        # 순수 저축 항목 합계
+        only_saving_sum = (
             db.query(func.sum(Statement.amount))
-            .join(Category, Category.id == Statement.category_id)
-            .join(MainCategory)
             .filter(extract("year", Statement.date) == date.year)
             .filter(extract("month", Statement.date) == date.month)
-            .filter(and_(Statement.category_id == 57, Statement.category_id == 58))
+            .filter(
+                and_(
+                    MainCategory.category_type == 3,
+                    and_(Statement.category_id != 57, Statement.category_id != 58),
+                )
+            )
             .first()
         )
 
@@ -1030,7 +1033,7 @@ async def get_statement_total(mode: int, date: date, db: Session = Depends(get_d
                 data.expense = i[1]
                 data.expense_saving = i[2]
             elif i[0] == 3:
-                data.saving = i[1] + expense_saving_sum[0]
+                data.saving = only_saving_sum[0] if only_saving_sum[0] else 0
 
         data.discount = discount_sum[0] if discount_sum[0] else 0
 
